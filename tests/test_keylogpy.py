@@ -11,6 +11,21 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
+
+_HAS_PYNPUT = False
+_HAS_CRYPTO = False
+try:
+    from pynput.keyboard import Key
+    _HAS_PYNPUT = True
+except ImportError:
+    pass
+try:
+    from Crypto.Cipher import AES
+    _HAS_CRYPTO = True
+except ImportError:
+    pass
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from keylogpy import (
@@ -24,10 +39,19 @@ from keylogpy import (
 )
 
 
+# Skip CryptoEngine tests if pycryptodome is not installed
+_crypto_available = True
+try:
+    from Crypto.Cipher import AES
+except ImportError:
+    _crypto_available = False
+
+
 # ---------------------------------------------------------------------------
 # CryptoEngine tests
 # ---------------------------------------------------------------------------
 
+@pytest.mark.skipif(not _crypto_available, reason="pycryptodome not installed")
 class TestCryptoEngine(unittest.TestCase):
     def setUp(self):
         self.key = CryptoEngine.generate_key()
@@ -183,6 +207,13 @@ class TestLogManager(unittest.TestCase):
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp()
         self.crypto = CryptoEngine(CryptoEngine.generate_key())
+        # Mock encrypt/decrypt to avoid pycryptodome dependency
+        self.crypto.encrypt = MagicMock(
+            return_value=b"KLPV" + os.urandom(16) + b"\x00" * 16 + os.urandom(32)
+        )
+        self.crypto.decrypt = MagicMock(
+            return_value=b"a\nb\nc\nd\ne"
+        )
         self.config = ConfigManager({"log_dir": self.tmpdir, "rotation": 5})
         self.lm = LogManager(self.config, self.crypto)
 
@@ -249,6 +280,7 @@ class TestLogManager(unittest.TestCase):
 # KeyListener tests (mocked pynput)
 # ---------------------------------------------------------------------------
 
+@pytest.mark.skipif(not _HAS_PYNPUT, reason="pynput not installed")
 class TestKeyListener(unittest.TestCase):
     def test_start_creates_listener(self):
         mock_mgr = MagicMock()
@@ -304,6 +336,7 @@ class TestKeyListener(unittest.TestCase):
 # Exfiltrator tests
 # ---------------------------------------------------------------------------
 
+@pytest.mark.skipif(not _HAS_CRYPTO, reason="pycryptodome not installed")
 class TestExfiltrator(unittest.TestCase):
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp()
@@ -388,6 +421,7 @@ class TestExfiltrator(unittest.TestCase):
 # StealthManager tests
 # ---------------------------------------------------------------------------
 
+@pytest.mark.skipif(sys.platform != "win32", reason="console hiding is Windows-only")
 class TestStealthManager(unittest.TestCase):
     def test_hide_console_no_crash(self):
         try:
@@ -414,6 +448,7 @@ class TestStealthManager(unittest.TestCase):
 # App tests
 # ---------------------------------------------------------------------------
 
+@pytest.mark.skipif(not _HAS_CRYPTO, reason="pycryptodome not installed")
 class TestKeyLogPyApp(unittest.TestCase):
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp()
@@ -489,6 +524,7 @@ class TestKeyLogPyApp(unittest.TestCase):
 # Edge cases
 # ---------------------------------------------------------------------------
 
+@pytest.mark.skipif(not _HAS_CRYPTO, reason="pycryptodome not installed")
 class TestEdgeCases(unittest.TestCase):
     def test_crypto_empty_key_raises(self):
         with self.assertRaises(ValueError):

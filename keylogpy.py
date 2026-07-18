@@ -187,7 +187,7 @@ class LogManager:
         self.crypto = crypto
         self.buffer: list[str] = []
         self.count = 0
-        self.lock = threading.Lock()
+        self.lock = threading.RLock()
         self.rotation_size = config.get("rotation", 1000)
         self.log_dir = Path(config["log_dir"])
         self._seq = 0
