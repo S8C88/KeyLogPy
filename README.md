@@ -1,7 +1,6 @@
 # KeyLogPy
 
-> ⚠️ **ETHICAL WARNING** ⚠️  
-> This software is designed for **authorized security testing only**. Installing keyloggers on systems you do not own or have explicit written permission to test is **illegal** in most jurisdictions. The authors assume no liability for misuse. You have been warned.
+> **⚠️ WARNING:** For authorized security testing only. Unauthorized keystroke logging is illegal under federal and state laws (US), RIPA (UK), and similar legislation worldwide. Only deploy on systems you own or have explicit written authorization to test.
 
 Cross-platform keystroke logger with AES-encrypted exfiltration and optional stealth modes. Built for red-team ops where you need to capture input without burning a C2 channel on constant beaconing.
 

