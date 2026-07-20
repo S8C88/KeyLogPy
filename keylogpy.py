@@ -6,13 +6,9 @@ Ops style: logging everywhere, exception handling on everything file-related.
 
 import argparse
 import base64
-import json
 import logging
 import os
-import shutil
-import signal
 import smtplib
-import struct
 import sys
 import threading
 import time
