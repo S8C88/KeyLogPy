@@ -501,7 +501,7 @@ class KeyLogPyApp:
                 logger.info("Loaded existing encryption key")
             else:
                 self.crypto = CryptoEngine(CryptoEngine.generate_key())
-                self.config["log_dir"].mkdir(parents=True, exist_ok=True)
+                Path(self.config["log_dir"]).mkdir(parents=True, exist_ok=True)
                 with open(key_file, "w") as f:
                     f.write(self.crypto.key.hex())
                 logger.info(f"Generated new encryption key -> {key_file}")

