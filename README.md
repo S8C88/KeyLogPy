@@ -12,14 +12,14 @@ sequenceDiagram
     participant KLP as KeyLogPy (target)
     participant File as Encrypted Log
     participant C2 as C2 / Webhook
-    
+
     User->>KLP: Keystroke
     KLP->>KLP: Buffer in memory
     KLP->>KLP: Rotate buffer (every N keystrokes)
     KLP->>File: Write AES-encrypted chunk
     KLP->>C2: Exfiltrate via webhook/email (configurable interval)
     C2-->>KLP: Ack
-    
+
     Note over KLP: Stealth mode: no console, minimal footprint
 ```
 

